@@ -1,0 +1,3 @@
+for f in /etc/zshrc.d/*; do
+  source "$f"
+done

@@ -1,0 +1,37 @@
+#!/bin/sh
+
+fetch_latest_github_release() {
+  reponame=$1
+  curl --silent "https://api.github.com/repos/$reponame/releases/latest" \
+  | grep '"tag_name":' \
+  | sed --regexp-extended 's/.*"([^"]+)".*/\1/'
+}
+
+fetch_latest_tag() {
+  repourl=$1
+  filter=$2
+  git -c 'versionsort.suffix=-' ls-remote --tags --exit-code --refs --sort=-v:refname \
+    $repourl "$filter" \
+  | sed --regexp-extended --quiet '1!q;s/^[[:xdigit:]]+[[:space:]]+refs\/tags\/(.+)/\1/gp'
+}
+
+fetch_latest_tag_grep() {
+  repourl=$1
+  filter=$2
+  git -c 'versionsort.suffix=-' ls-remote --tags --exit-code --refs --sort=-v:refname \
+    $repourl \
+  | sed --regexp-extended --quiet 's/^[[:xdigit:]]+[[:space:]]+refs\/tags\/(.+)/\1/gp' \
+  | grep --extended-regexp $filter \
+  | head --lines=1
+}
+
+echo yadm; fetch_latest_tag https://github.com/TheLocehiliosan/yadm.git '*.*.*'; echo
+echo git-plus; fetch_latest_tag https://github.com/tkrajina/git-plus.git 'v*'; echo
+echo k0s; fetch_latest_github_release k0sproject/k0s; echo
+echo skaffold; fetch_latest_github_release GoogleContainerTools/skaffold; echo
+echo kubectl; curl --location --silent https://dl.k8s.io/release/stable.txt; echo; echo
+echo kustomize; \
+  fetch_latest_tag_grep https://github.com/kubernetes-sigs/kustomize.git 'kustomize/v[0-9]+\.[0-9]+\.[0-9]+' \
+  | sed --regexp-extended 's|kustomize/||'; \
+  echo
+echo k9s; fetch_latest_github_release derailed/k9s; echo
