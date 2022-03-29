@@ -2,7 +2,7 @@ ARG yadm_version=3.2.1
 ARG git_plus_version=v0.4.7
 ARG k0s_version=v1.23.5+k0s.0
 ARG skaffold_version=v1.37.0
-ARG kubectl_version=v1.23.4
+ARG kubectl_version=v1.23.5
 ARG kustomize_version=v4.5.3
 ARG k9s_version=v0.25.18
 
