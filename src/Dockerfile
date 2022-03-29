@@ -81,7 +81,7 @@ RUN \
   ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/git-subrepo.1
 
 ARG git_plus_version
-RUN pip install git-plus==$git_plus_version
+RUN pip install --no-cache-dir git-plus==$git_plus_version
 
 ARG yadm_version
 RUN \
