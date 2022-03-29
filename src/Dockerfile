@@ -140,7 +140,7 @@ RUN \
   rm --recursive --force /tmp/k9s_$k9s_version
 
 RUN mkdir --parents /etc/zshrc.d
-COPY files/etc/zshrc.d/zsh_aliases /etc/zshrc.d/
+COPY files/etc/zshrc.d/80--aliases /etc/zshrc.d/
 COPY files/etc/zshrc /tmp/
 RUN \
   echo >> /etc/zshrc; \
@@ -149,6 +149,7 @@ RUN \
 
 ENV ZNAP_HOME=/opt/zsh-snap
 COPY files/opt/zsh-snap/ /opt/zsh-snap
+COPY files/etc/zshrc.d/01--znap-repos /etc/zshrc.d/
 
 COPY --chmod=755 files/sbin/entrypoint.sh /sbin/
 ENTRYPOINT ["/usr/bin/tini", "--", "/sbin/entrypoint.sh"]
