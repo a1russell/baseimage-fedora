@@ -35,6 +35,7 @@ RUN /usr/sbin/install_clean \
   python3 \
   python3-pip \
   python3-setuptools
+ENV PATH=/root/.cargo/bin:$PATH
 
 RUN /usr/sbin/install_clean \
   cargo-doc
