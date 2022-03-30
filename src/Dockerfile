@@ -59,6 +59,7 @@ RUN /usr/sbin/install_clean \
   ripgrep \
   socat \
   starship \
+  unzip \
   xclip \
   xz \
   zsh
