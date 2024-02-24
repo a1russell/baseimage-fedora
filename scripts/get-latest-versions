@@ -27,9 +27,9 @@ fetch_latest_tag_grep() {
 
 echo yadm; fetch_latest_tag https://github.com/TheLocehiliosan/yadm.git '*.*.*'; echo
 echo git-plus; fetch_latest_tag https://github.com/tkrajina/git-plus.git 'v*'; echo
+echo k8s; curl --location --silent https://dl.k8s.io/release/stable.txt; echo; echo
 echo k0s; fetch_latest_github_release k0sproject/k0s; echo
 echo skaffold; fetch_latest_github_release GoogleContainerTools/skaffold; echo
-echo kubectl; curl --location --silent https://dl.k8s.io/release/stable.txt; echo; echo
 echo kustomize; \
   fetch_latest_tag_grep https://github.com/kubernetes-sigs/kustomize.git 'kustomize/v[0-9]+\.[0-9]+\.[0-9]+' \
   | sed --regexp-extended 's|kustomize/||'; \

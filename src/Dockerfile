@@ -1,12 +1,12 @@
-ARG yadm_version=3.2.1
-ARG git_plus_version=v0.4.7
-ARG k0s_version=v1.23.5+k0s.0
-ARG skaffold_version=v1.37.0
-ARG kubectl_version=v1.23.5
-ARG kustomize_version=v4.5.4
-ARG k9s_version=v0.25.18
+ARG yadm_version=3.2.2
+ARG git_plus_version=v0.4.10
+ARG k8s_version=v1.29.2
+ARG k0s_version=$k8s_version+k0s.0
+ARG skaffold_version=v2.10.1
+ARG kustomize_version=v5.3.0
+ARG k9s_version=v0.31.9
 
-FROM fedora:36 AS updated_fedora
+FROM fedora:41 AS updated_fedora
 
 RUN \
   dnf upgrade \
@@ -59,11 +59,16 @@ RUN /usr/sbin/install_clean \
   openssh-clients \
   ripgrep \
   socat \
-  starship \
   unzip \
   xclip \
   xz \
   zsh
+
+RUN \
+  /usr/sbin/install_clean dnf-plugins-core; \
+  dnf copr enable atim/starship; \
+  /usr/sbin/install_clean starship; \
+  dnf --quiet --assumeyes remove dnf-plugins-core
 
 RUN ln --force /bin/sh /bin/dash
 
@@ -110,11 +115,11 @@ RUN \
     https://storage.googleapis.com/skaffold/releases/$skaffold_version/skaffold-linux-amd64; \
   chmod 755 /usr/local/bin/skaffold
 
-ARG kubectl_version
+ARG k8s_version
 RUN \
   curl --silent --show-error --location --fail \
     --output /usr/local/bin/kubectl \
-    https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl; \
+    https://dl.k8s.io/release/$k8s_version/bin/linux/amd64/kubectl; \
   chmod 755 /usr/local/bin/kubectl
 
 ##region(collapsed) kustomize
