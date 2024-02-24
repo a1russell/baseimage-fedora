@@ -68,7 +68,6 @@ case $words[1] in
 esac
 ret=$(( ret && ? ))
 
-local -aU opts=( -qS ' ' ) repos=( ~znap/*(D-/:t) )
 case $state in
   ( dirs )
     _alternative 'directories:directory:_files -/'
@@ -80,9 +79,15 @@ case $state in
   ;;
   ( repos-caches )
     local -aU caches=( ${XDG_CACHE_HOME:-$HOME/.cache}/zsh-snap/eval/*.zsh(D-.) )
+    local -a repos=() opts=( -qS ' ' )
+    local gitdir=
+    ..znap.repos
     _alternative -O opts "repositories:repo:($repos)" "cache-files:cache:(${caches[@]:t:r})"
   ;;
   ( repos )
+    local -a repos=() opts=( -qS ' ' )
+    local gitdir=
+    ..znap.repos
     _alternative -O opts "repositories:repo:($repos)"
   ;;
   ( themes )

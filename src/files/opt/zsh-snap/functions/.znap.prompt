@@ -1,17 +1,21 @@
 #!/bin/zsh
 # instant prompt from repo
-# args: [ <repo> ] <theme>
+# args: <repo> [ <theme> ]
 zmodload -F zsh/parameter p:functions
 zmodload -F zsh/zleparameter p:widgets
 autoload -Uz add-zsh-hook add-zle-hook-widget promptinit
 
 .znap.prompt() {
-  if (( # )); then
-    private repo=~znap/$1
-    [[ $1 == */* ]] &&
-        repo=~[$1]
-    private theme=${2:-${${repo##*/((oh-my-|)zsh-|)}%%((-zsh|)-(prompt|theme)|.zsh)}}
-    .znap.prompt.load $repo $theme
+  local theme=
+
+  if (( $# )); then
+    if [[ $1 == */* ]]; then
+      .znap.clone $1 ||
+          return
+    fi
+
+    local repo=$1 theme=${2:-${${${1:t}/(.zsh|zsh-)/}//-(prompt|theme)/}}
+    .znap.prompt.load
   fi
 
   ..znap.tput civis # Make cursor invisible.
@@ -19,7 +23,7 @@ autoload -Uz add-zsh-hook add-zle-hook-widget promptinit
   add-zsh-hook precmd .znap.prompt.precmd
 
   # Temporarily redirect standard error to file.
-  mkdir -pm 0700 ${XDG_DATA_HOME:-~/.local/share}/zsh-snap/err
+  mkdir -pm 0700 ${XDG_DATA_HOME:-$HOME/.local/share}/zsh-snap/err
   typeset -gHi _znap_prompt_fd=-1
   typeset -gH _znap_prompt_tmp==( <<< '' )
   exec {_znap_prompt_fd}>&2  # Save a copy of std err.
@@ -31,24 +35,22 @@ autoload -Uz add-zsh-hook add-zle-hook-widget promptinit
     prompt $theme
     ..znap.tput sc  # Save cursor position (overwriting the previous save).
 
-    private precmd=prompt_${theme}_precmd
-    if [[ -n $functions[$precmd] ]]; then
-      $precmd
+    private _P__precmd=prompt_${theme}_precmd
+    if [[ -n $functions[$_P__precmd] ]]; then
+      $_P__precmd
 
-      # Ensure $precmd doesn't get called twice before the first prompt.
-      functions[:znap:$precmd]=$functions[$precmd]
-      eval "$precmd() {
-        functions[$precmd]=\$functions[:znap:$precmd]
-        unfunction :znap:$precmd
+      # Ensure $_P__precmd doesn't get called twice before the first prompt.
+      functions[:znap:$_P__precmd]=$functions[$_P__precmd]
+      eval "$_P__precmd() {
+        functions[$_P__precmd]=\$functions[:znap:$_P__precmd]
+        unfunction :znap:$_P__precmd
       }"
     fi
   fi
 
   setopt NO_promptsp
-  [[ -o promptcr ]] &&
-      print -n $'\r'
-  :
-  print -nPr -- "$PS1"
+  print -nPr -- "%$COLUMNS<<${(l:$COLUMNS:: :)}$RPS1"
+  print -nPr -- $'\r'"$PS1"
   ..znap.tput cnorm # Make cursor normal (visible).
   true
 }

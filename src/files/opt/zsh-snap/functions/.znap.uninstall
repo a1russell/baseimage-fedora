@@ -2,9 +2,26 @@
 # remove executables & completion functions
 # args: <repo> ...
 emulate -L zsh; setopt $_znap_opts
-zmodload -F zsh/files b:zf_rm
 zmodload -F zsh/parameter p:commands
 autoload -Uz is-at-least
+
+# Try if we have a safer and faster alternative to `rm`.
+if [[ $VENDOR == apple ]]; then
+  private rm=trash
+  trash() {
+    local -aU items=( $^@(N) )
+    items=( '(POSIX file "'${^items[@]:a}'")' )
+    osascript -e 'tell application "Finder" to delete every item of {'${(j:, :)items}'}' \
+        > /dev/null
+  }
+elif command -v gio > /dev/null; then
+  # gio is available for macOS, but gio trash does NOT work correctly there.
+  private rm='gio trash'
+else
+  zmodload -F zsh/files b:zf_rm
+  private rm='zf_rm -frs'
+fi
+
 
 if (( $# < 1 )); then
   print -u2 'znap uninstall: not enough arguments'
@@ -12,34 +29,18 @@ if (( $# < 1 )); then
   return $(( sysexits[(i)USAGE] + 63 ))
 fi
 
-private -a abs=() file=()
+private -a files=()
 private -i ret=0
-private repo=
-for repo in ~znap/$^@:t; do
-  if [[ -d $repo ]]; then
-    is-at-least 2.31 ${${=$( git --version )}[3]} &&
-        git -C $repo maintenance unregister --quiet
-    print 'Removing:'
-    file=( ~/.local/bin/* ${XDG_DATA_HOME:-~/.local/share}/zsh/site-functions/* )
-    while (( $#file ));do
-      abs=( $file[1]:A )
-      if [[ $abs == $repo/* || $file:t == ${repo:t}(|.*) ]]; then
-        print -r -- ${(D)file[1]}
-        zf_rm -frs $file[1]
-        [[ $file == ~/.local/bin/* && ! -d $abs && -v commands[$file[1]:t] ]] &&
-            unhash $file[1]:t
-      fi
-      shift file
-    done
-    zf_rm -frs $repo
-    print -r -- $repo
-    print -P "%F{12}${repo:t}%f uninstalled."
-  else
-    print -Pu2 "%F{12}${repo:t} %F{1}not found.%f"
-    (( ret = sysexits[(i)NOINPUT] + 63 ))
-  fi
+private dir= file repo=
+for repo in $@; do
+  dir=~[$repo]
+  is-at-least 2.31 ${${=$( git --version )}[3]} &&
+      git -C $repo maintenance unregister &> /dev/null
+  print -Pr "Removing %F{4}${dir}%f"
+  $=rm $dir
+  print -P "%F{12}${repo}%f uninstalled."
 done
 hash -f
 [[ -f $_comp_dumpfile ]] &&
-    zf_rm -f $_comp_dumpfile
+    $=rm $_comp_dumpfile
 return ret

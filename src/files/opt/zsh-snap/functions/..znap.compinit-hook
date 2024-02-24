@@ -10,7 +10,9 @@ if ! [[ -v _comp_setup && -f $_comp_dumpfile ]]; then
   autoload -Uz compinit
   bindkey() {:}
   {
-    compinit -d $_comp_dumpfile
+    local -a compargs=()
+    zstyle -a ':autocomplete::compinit' arguments compargs
+    compinit -d "$_comp_dumpfile" "$compargs[@]"
   } always {
     unfunction bindkey
   }
@@ -21,9 +23,9 @@ if ! [[ -v _comp_setup && -f $_comp_dumpfile ]]; then
       ) &|
 fi
 
-private args=
-for args in "$_znap_compdef[@]"; do
-  eval "compdef $args"
+private _P__args=
+for _P__args in "$_znap_compdef[@]"; do
+  eval "compdef $_P__args"
 done
 
 unset _znap_compdef
