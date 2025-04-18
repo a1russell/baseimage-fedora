@@ -1,10 +1,10 @@
-ARG yadm_version=3.2.2
+ARG yadm_version=3.5.0
 ARG git_plus_version=v0.4.10
-ARG k8s_version=v1.29.2
+ARG k8s_version=v1.32.3
 ARG k0s_version=$k8s_version+k0s.0
-ARG skaffold_version=v2.10.1
-ARG kustomize_version=v5.3.0
-ARG k9s_version=v0.31.9
+ARG skaffold_version=v2.15.0
+ARG kustomize_version=v5.6.0
+ARG k9s_version=v0.50.3
 
 FROM fedora:41 AS updated_fedora
 
