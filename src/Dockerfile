@@ -80,8 +80,8 @@ RUN mkdir --mode=700 --parents /root/.ssh
 
 COPY files/opt/git-subrepo /opt/git-subrepo
 ENV GIT_SUBREPO_ROOT=/opt/git-subrepo
-env PATH=$GIT_SUBREPO_ROOT/lib:$PATH
-env MANPATH=$GIT_SUBREPO_ROOT/man:$MANPATH
+ENV PATH=$GIT_SUBREPO_ROOT/lib:$PATH
+ENV MANPATH=$GIT_SUBREPO_ROOT/man:$MANPATH
 RUN \
   ln --symbolic /opt/git-subrepo/share/enable-completion.sh /etc/profile.d/git-subrepo-completion.sh; \
   mkdir --parents /usr/local/share/man/man1; \
