@@ -1,5 +1,5 @@
 #!/bin/sh
-# Apt installer helper for Docker images
+# dnf installer helper for Docker images
 
 set -o errexit
 
