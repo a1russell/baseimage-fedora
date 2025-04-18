@@ -1,3 +1,5 @@
-for f in /etc/zshrc.d/*; do
-  source "$f"
-done
+if [ "$(ls /etc/zshrc.d/* 2> /dev/null | wc --lines)" -gt "0" ]; then
+  for f in /etc/zshrc.d/*; do
+    source "$f"
+  done
+fi
