@@ -8,11 +8,12 @@ ARG k9s_version=v0.50.3
 
 FROM fedora:41 AS updated_fedora
 
-RUN \
-  dnf upgrade \
-    --assumeyes --setopt=install_weak_deps=False \
-  && dnf --quiet --assumeyes autoremove \
-  && dnf clean all
+RUN <<EOF
+set -o errexit
+dnf upgrade  --assumeyes --setopt=install_weak_deps=False
+dnf --quiet --assumeyes autoremove
+dnf clean all
+EOF
 
 FROM updated_fedora AS updated_os_with_helper
 
@@ -64,11 +65,12 @@ RUN /usr/sbin/install_clean \
   xz \
   zsh
 
-RUN \
-  /usr/sbin/install_clean dnf-plugins-core; \
-  dnf copr enable atim/starship; \
-  /usr/sbin/install_clean starship; \
-  dnf --quiet --assumeyes remove dnf-plugins-core
+RUN <<EOF
+/usr/sbin/install_clean dnf-plugins-core
+dnf copr enable atim/starship
+/usr/sbin/install_clean starship
+dnf --quiet --assumeyes remove dnf-plugins-core
+EOF
 
 RUN ln --force /bin/sh /bin/dash
 
@@ -82,77 +84,85 @@ COPY files/opt/git-subrepo /opt/git-subrepo
 ENV GIT_SUBREPO_ROOT=/opt/git-subrepo
 ENV PATH=$GIT_SUBREPO_ROOT/lib:$PATH
 ENV MANPATH=$GIT_SUBREPO_ROOT/man:$MANPATH
-RUN \
-  ln --symbolic /opt/git-subrepo/share/enable-completion.sh /etc/profile.d/git-subrepo-completion.sh; \
-  mkdir --parents /usr/local/share/man/man1; \
-  ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/git-subrepo.1
+RUN <<EOF
+ln --symbolic /opt/git-subrepo/share/enable-completion.sh /etc/profile.d/git-subrepo-completion.sh
+mkdir --parents /usr/local/share/man/man1
+ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/git-subrepo.1
+EOF
 
 ARG git_plus_version
 RUN pip install --no-cache-dir git-plus==$git_plus_version
 
 ARG yadm_version
-RUN \
-  curl --silent --show-error --location --fail \
-    --output /usr/local/bin/yadm \
-    https://raw.githubusercontent.com/TheLocehiliosan/yadm/$yadm_version/yadm; \
-  chmod 755 /usr/local/bin/yadm
+RUN <<EOF
+curl --silent --show-error --location --fail \
+  --output /usr/local/bin/yadm \
+  https://raw.githubusercontent.com/TheLocehiliosan/yadm/$yadm_version/yadm
+chmod 755 /usr/local/bin/yadm
+EOF
 
 ARG k0s_version
-RUN \
-  enc_ver=$(jq --raw-output --null-input --arg _ "$k0s_version" '$_ | @uri'); \
-  curl --silent --show-error --location --fail \
-    --output /usr/local/bin/k0s \
-    https://github.com/k0sproject/k0s/releases/download/$enc_ver/k0s-$enc_ver-amd64; \
-  chmod 755 /usr/local/bin/k0s; \
-  mkdir --parents /etc/k0s; \
-  /usr/local/bin/k0s config create > /etc/k0s/k0s.yaml
+RUN <<EOF
+enc_ver=$(jq --raw-output --null-input --arg _ "$k0s_version" '$_ | @uri')
+curl --silent --show-error --location --fail \
+  --output /usr/local/bin/k0s \
+  https://github.com/k0sproject/k0s/releases/download/$enc_ver/k0s-$enc_ver-amd64
+chmod 755 /usr/local/bin/k0s
+mkdir --parents /etc/k0s
+/usr/local/bin/k0s config create > /etc/k0s/k0s.yaml
+EOF
 COPY --chmod=755 files/sbin/entrypoint.d/k0s.sh /sbin/entrypoint.d/
 
 ARG skaffold_version
-RUN \
-  curl --silent --show-error --location --fail \
-    --output /usr/local/bin/skaffold \
-    https://storage.googleapis.com/skaffold/releases/$skaffold_version/skaffold-linux-amd64; \
-  chmod 755 /usr/local/bin/skaffold
+RUN <<EOF
+curl --silent --show-error --location --fail \
+  --output /usr/local/bin/skaffold \
+  https://storage.googleapis.com/skaffold/releases/$skaffold_version/skaffold-linux-amd64
+chmod 755 /usr/local/bin/skaffold
+EOF
 
 ARG k8s_version
-RUN \
-  curl --silent --show-error --location --fail \
-    --output /usr/local/bin/kubectl \
-    https://dl.k8s.io/release/$k8s_version/bin/linux/amd64/kubectl; \
-  chmod 755 /usr/local/bin/kubectl
+RUN <<EOF
+curl --silent --show-error --location --fail \
+  --output /usr/local/bin/kubectl \
+  https://dl.k8s.io/release/$k8s_version/bin/linux/amd64/kubectl
+chmod 755 /usr/local/bin/kubectl
+EOF
 
 ##region(collapsed) kustomize
 ARG kustomize_version
-RUN \
-  mkdir --parents /tmp/kustomize_$kustomize_version; \
-  curl --silent --show-error --location --fail \
-    --output /tmp/kustomize_$kustomize_version/kustomize.tar.gz \
-    https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$kustomize_version/kustomize_${kustomize_version}_linux_amd64.tar.gz; \
-  tar --extract --gzip --file=/tmp/kustomize_$kustomize_version/kustomize.tar.gz --directory=/tmp/kustomize_$kustomize_version; \
-  cp /tmp/kustomize_$kustomize_version/kustomize /usr/local/bin/kustomize; \
-  chmod 755 /usr/local/bin/kustomize; \
-  rm --recursive --force /tmp/kustomize_$kustomize_version
+RUN <<EOF
+mkdir --parents /tmp/kustomize_$kustomize_version
+curl --silent --show-error --location --fail \
+  --output /tmp/kustomize_$kustomize_version/kustomize.tar.gz \
+  https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$kustomize_version/kustomize_${kustomize_version}_linux_amd64.tar.gz
+tar --extract --gzip --file=/tmp/kustomize_$kustomize_version/kustomize.tar.gz --directory=/tmp/kustomize_$kustomize_version
+cp /tmp/kustomize_$kustomize_version/kustomize /usr/local/bin/kustomize
+chmod 755 /usr/local/bin/kustomize
+rm --recursive --force /tmp/kustomize_$kustomize_version
+EOF
 ##endregion
 
 ARG k9s_version
-RUN \
-  mkdir --parents /tmp/k9s_$k9s_version; \
-  curl --silent --show-error --location --fail \
-    --output /tmp/k9s_$k9s_version/k9s.tar.gz \
-    https://github.com/derailed/k9s/releases/download/$k9s_version/k9s_Linux_x86_64.tar.gz; \
-  tar --extract --gzip --file=/tmp/k9s_$k9s_version/k9s.tar.gz --directory=/tmp/k9s_$k9s_version; \
-  cp /tmp/k9s_$k9s_version/k9s /usr/local/bin/k9s; \
-  chmod 755 /usr/local/bin/k9s; \
-  rm --recursive --force /tmp/k9s_$k9s_version
+RUN <<EOF
+mkdir --parents /tmp/k9s_$k9s_version
+curl --silent --show-error --location --fail \
+  --output /tmp/k9s_$k9s_version/k9s.tar.gz \
+  https://github.com/derailed/k9s/releases/download/$k9s_version/k9s_Linux_x86_64.tar.gz
+tar --extract --gzip --file=/tmp/k9s_$k9s_version/k9s.tar.gz --directory=/tmp/k9s_$k9s_version
+cp /tmp/k9s_$k9s_version/k9s /usr/local/bin/k9s
+chmod 755 /usr/local/bin/k9s
+rm --recursive --force /tmp/k9s_$k9s_version
+EOF
 
 RUN mkdir --parents /etc/zshrc.d
 COPY files/etc/zshrc.d/80--aliases.zsh /etc/zshrc.d/
 COPY files/etc/zshrc /tmp/
-RUN \
-  echo >> /etc/zshrc; \
-  cat /tmp/zshrc >> /etc/zshrc; \
-  rm /tmp/zshrc
+RUN <<EOF
+echo >> /etc/zshrc
+cat /tmp/zshrc >> /etc/zshrc
+rm /tmp/zshrc
+EOF
 
 ENV ZNAP_HOME=/opt/zsh-snap
 COPY files/opt/zsh-snap/ /opt/zsh-snap
