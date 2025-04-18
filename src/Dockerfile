@@ -82,9 +82,8 @@ RUN mkdir --mode=700 --parents /root/.ssh
 
 COPY files/opt/git-subrepo /opt/git-subrepo
 ENV GIT_SUBREPO_ROOT=/opt/git-subrepo
-ENV PATH=$GIT_SUBREPO_ROOT/lib:$PATH
-ENV MANPATH=$GIT_SUBREPO_ROOT/man:$MANPATH
 RUN <<EOF
+cp --recursive --symbolic /opt/git-subrepo/lib/* /usr/local/bin
 ln --symbolic /opt/git-subrepo/share/enable-completion.sh /etc/profile.d/git-subrepo-completion.sh
 mkdir --parents /usr/local/share/man/man1
 ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/git-subrepo.1
