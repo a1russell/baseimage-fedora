@@ -33,9 +33,7 @@ RUN /usr/sbin/install_clean \
   cargo \
   iproute \
   iptables-legacy \
-  python3 \
-  python3-pip \
-  python3-setuptools
+  python3
 ENV PATH=/root/.cargo/bin:$PATH
 
 RUN /usr/sbin/install_clean \
@@ -65,6 +63,12 @@ RUN /usr/sbin/install_clean \
   xz \
   zsh
 
+ENV UV_TOOL_DIR=/usr/local/share/uv
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
+RUN \
+  curl --silent --show-error --fail --location https://astral.sh/uv/install.sh \
+  | env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
+
 RUN <<EOF
 /usr/sbin/install_clean dnf-plugins-core
 dnf copr enable atim/starship
@@ -90,7 +94,7 @@ ln --symbolic /opt/git-subrepo/man/man1/git-subrepo.1 /usr/local/share/man/man1/
 EOF
 
 ARG git_plus_version
-RUN pip install --no-cache-dir git-plus==$git_plus_version
+RUN uv tool install --no-managed-python --no-cache git-plus@$git_plus_version
 
 ARG yadm_version
 RUN <<EOF
